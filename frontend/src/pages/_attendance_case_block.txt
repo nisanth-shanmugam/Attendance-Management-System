@@ -1,0 +1,145 @@
+      case "Attendance": {
+        const PAGE_SIZE = 10;
+        const totalPages = Math.max(Math.ceil(txTotal / PAGE_SIZE), 1);
+        return (
+          <div style={s.fullCard}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
+              <h3 style={{ ...s.cardTitle, margin: 0 }}><FaClock style={{ marginRight: 8, color: "#3b82f6" }} />Attendance Tracking</h3>
+              <input type="date" style={s.formInput} value={attendanceDate} onChange={e => { setAttendanceDate(e.target.value); fetchAllAttendance(e.target.value); }} />
+            </div>
+            {allAttendance.length === 0 ? (
+              <p style={s.empty}>No attendance records for this date</p>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={s.table}>
+                  <thead>
+                    <tr>{["Employee", "Email", "Date", "First Check In", "Last Check Out", "Status", "All Logs"].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {allAttendance.map((a, i) => (
+                      <tr key={a.id} style={{ background: i % 2 === 0 ? "#f8fafc" : "white" }}>
+                        <td style={s.td}>
+                          <div style={s.memberCell}>
+                            <div style={{ ...s.memberAvatar, background: "#dbeafe", color: "#1d4ed8" }}>
+                              {a.employee?.[0]?.toUpperCase() || "E"}
+                            </div>
+                            {a.employee}
+                          </div>
+                        </td>
+                        <td style={s.td}>{a.email}</td>
+                        <td style={s.td}>{a.date}</td>
+                        <td style={s.td}>{a.check_in || "--"}</td>
+                        <td style={s.td}>{a.check_out || "--"}</td>
+                        <td style={s.td}>
+                          <span style={{ ...s.badge, background: a.status === "Present" ? "#d1fae5" : a.status === "On Leave" ? "#ede9fe" : "#fee2e2", color: a.status === "Present" ? "#065f46" : a.status === "On Leave" ? "#6d28d9" : "#991b1b" }}>
+                            {a.status === "Present" ? <><FaCheckCircle style={{ marginRight: 4 }} />Present</> : a.status === "On Leave" ? "On Leave" : <><FaTimesCircle style={{ marginRight: 4 }} />Absent</>}
+                          </span>
+                        </td>
+                        <td style={s.td}>
+                          {a.logs && a.logs.length > 0 ? (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                              {a.logs.map((log, li) => (
+                                <span key={li} style={{ fontSize: 11, color: log.action === "check_in" ? "#065f46" : "#991b1b", background: log.action === "check_in" ? "#d1fae5" : "#fee2e2", borderRadius: 4, padding: "2px 7px" }}>
+                                  {log.action === "check_in" ? "IN" : "OUT"} {log.time}
+                                </span>
+                              ))}
+                            </div>
+                          ) : <span style={{ color: "#94a3b8" }}>--</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <h4 style={{ margin: "28px 0 12px", fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Full Attendance Log</h4>
+            <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap", alignItems: "flex-end" }}>
+              <div>
+                <label style={s.label}>Employee</label>
+                <select style={{ ...s.formInput, width: 200 }} value={txEmployee} onChange={e => setTxEmployee(e.target.value)}>
+                  <option value="">All Employees</option>
+                  {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.full_name} (@{emp.username})</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={s.label}>From</label>
+                <input type="date" style={{ ...s.formInput, width: 160 }} value={txDateFrom} onChange={e => setTxDateFrom(e.target.value)} />
+              </div>
+              <div>
+                <label style={s.label}>To</label>
+                <input type="date" style={{ ...s.formInput, width: 160 }} value={txDateTo} onChange={e => setTxDateTo(e.target.value)} />
+              </div>
+              <div>
+                <label style={s.label}>Status</label>
+                <select style={{ ...s.formInput, width: 140 }} value={txStatus} onChange={e => setTxStatus(e.target.value)}>
+                  <option value="">All</option>
+                  <option value="Present">Present</option>
+                  <option value="Absent">Absent</option>
+                  <option value="On Leave">On Leave</option>
+                </select>
+              </div>
+              <button style={{ ...s.addBtn, height: 36 }} onClick={() => fetchTransactions(1)}>Search</button>
+              <button style={{ ...s.addBtn, background: "#64748b", height: 36 }} onClick={() => { setTxEmployee(""); setTxDateFrom(""); setTxDateTo(""); setTxStatus(""); fetchTransactions(1, "", "", "", ""); }}>Reset</button>
+            </div>
+            {txRecords.length === 0 ? (
+              <p style={s.empty}>Use filters above and click Search to load the full log.</p>
+            ) : (
+              <>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={s.table}>
+                    <thead>
+                      <tr>{["Employee", "Date", "First Check In", "Last Check Out", "Status", "All Logs"].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                      {txRecords.map((r, i) => (
+                        <tr key={r.id} style={{ background: i % 2 === 0 ? "#f8fafc" : "white" }}>
+                          <td style={s.td}>
+                            <div style={s.memberCell}>
+                              <div style={{ ...s.memberAvatar, background: "#dbeafe", color: "#1d4ed8" }}>{r.employee?.[0]?.toUpperCase() || "E"}</div>
+                              <div>
+                                <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{r.employee}</p>
+                                <p style={{ margin: 0, fontSize: 11, color: "#64748b" }}>{r.email}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={s.td}>{r.date}</td>
+                          <td style={s.td}>{r.check_in || "--"}</td>
+                          <td style={s.td}>{r.check_out || "--"}</td>
+                          <td style={s.td}>
+                            <span style={{ ...s.badge, background: r.status === "Present" ? "#d1fae5" : r.status === "On Leave" ? "#ede9fe" : "#fee2e2", color: r.status === "Present" ? "#065f46" : r.status === "On Leave" ? "#6d28d9" : "#991b1b" }}>
+                              {r.status}
+                            </span>
+                          </td>
+                          <td style={s.td}>
+                            {r.logs && r.logs.length > 0 ? (
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                                {r.logs.map((log, li) => (
+                                  <span key={li} style={{ fontSize: 11, color: log.action === "check_in" ? "#065f46" : "#991b1b", background: log.action === "check_in" ? "#d1fae5" : "#fee2e2", borderRadius: 4, padding: "2px 7px" }}>
+                                    {log.action === "check_in" ? "IN" : "OUT"} {log.time}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : <span style={{ color: "#94a3b8" }}>--</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
+                  <span style={{ fontSize: 13, color: "#64748b" }}>Showing {(txPage - 1) * PAGE_SIZE + 1}-{Math.min(txPage * PAGE_SIZE, txTotal)} of {txTotal}</span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button style={{ ...s.smallBtn, background: txPage === 1 ? "#e2e8f0" : "#1e3a8a", color: txPage === 1 ? "#94a3b8" : "white" }} disabled={txPage === 1} onClick={() => fetchTransactions(txPage - 1)}>Prev</button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - txPage) <= 1).reduce((acc, p, idx, arr) => { if (idx > 0 && p - arr[idx-1] > 1) acc.push("..."); acc.push(p); return acc; }, []).map((p, i) => (
+                      p === "..." ? <span key={i} style={{ padding: "6px 4px", fontSize: 13, color: "#94a3b8" }}>...</span>
+                      : <button key={p} style={{ ...s.smallBtn, background: p === txPage ? "#1e3a8a" : "#e2e8f0", color: p === txPage ? "white" : "#0f172a", minWidth: 32 }} onClick={() => fetchTransactions(p)}>{p}</button>
+                    ))}
+                    <button style={{ ...s.smallBtn, background: txPage === totalPages ? "#e2e8f0" : "#1e3a8a", color: txPage === totalPages ? "#94a3b8" : "white" }} disabled={txPage === totalPages} onClick={() => fetchTransactions(txPage + 1)}>Next</button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      }
